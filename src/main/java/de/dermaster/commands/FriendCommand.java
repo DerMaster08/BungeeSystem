@@ -50,11 +50,16 @@ import java.sql.SQLException;
 /*  46 */             p.sendMessage(TextComponent.fromLegacyText(String.valueOf(Proxy.FRIEND_PREFIX) + Config.getSetting("SelfFriendRequest")));
 /*     */             return;
 /*     */           } 
-/*  49 */           if (FriendUtils.hasFriend(FriendUtils.getUUIDFromName(p.getName()), FriendUtils.getUUIDFromName(args[1]))) {
-/*  50 */             p.sendMessage(TextComponent.fromLegacyText(String.valueOf(Proxy.FRIEND_PREFIX) + Config.getSetting("AlreadyFriend")));
-/*     */             return;
-/*     */           } 
-/*  53 */           if (!FriendUtils.isOnline(FriendUtils.getUUIDFromName(args[1]))) {
+/*  49 */
+                try {
+                    if (MySQL.arefriends(p.getName(), args[1])) {
+                    /*  50 */             p.sendMessage(TextComponent.fromLegacyText(String.valueOf(Proxy.FRIEND_PREFIX) + Config.getSetting("AlreadyFriend")));
+                    /*     */             return;
+                    /*     */           }
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+                if (!FriendUtils.isOnline(FriendUtils.getUUIDFromName(args[1]))) {
 /*  54 */             p.sendMessage(TextComponent.fromLegacyText(String.valueOf(Proxy.FRIEND_PREFIX) + Config.getSetting("PlayerNotOnline")));
 /*     */             
 /*     */             return;
@@ -69,7 +74,7 @@ import java.sql.SQLException;
 /*  61 */             if (FriendUtils.isOnline(FriendUtils.getUUIDFromName(args[1]))) {
 /*  62 */               ProxiedPlayer p2 = ProxyServer.getInstance().getPlayer(args[1]);
 /*  63 */               p2.sendMessage(TextComponent.fromLegacyText(String.valueOf(Proxy.FRIEND_PREFIX) + Config.getSetting("FriendRequestAdded").replace("<PlayerName>", p.getName())));
-/*     */             } 
+/*     */             }
 /*     */           } else {
 /*  66 */             ProxiedPlayer p2 = ProxyServer.getInstance().getPlayer(args[1]);
 /*  67 */             if (!FriendUtils.hasRequest(FriendUtils.getUUIDFromName(p2.getName()), FriendUtils.getUUIDFromName(p.getName()))) {
@@ -89,17 +94,22 @@ import java.sql.SQLException;
 /*     */             } 
 /*     */           } 
 /*  83 */         } else if (args[0].equalsIgnoreCase("accept")) {
-/*  84 */           if (FriendUtils.hasRequest(FriendUtils.getUUIDFromName(p.getName()), FriendUtils.getUUIDFromName(args[1]))) {
-/*  85 */             FriendUtils.acceptFriend(FriendUtils.getUUIDFromName(p.getName()), FriendUtils.getUUIDFromName(args[1]));
-/*  86 */             p.sendMessage(TextComponent.fromLegacyText(String.valueOf(Proxy.FRIEND_PREFIX) + Config.getSetting("FriendAccepted").replace("<PlayerName>", args[1])));
-/*  87 */             if (FriendUtils.isOnline(FriendUtils.getUUIDFromName(args[1]))) {
-/*  88 */               ProxiedPlayer p2 = ProxyServer.getInstance().getPlayer(args[1]);
-/*  89 */               p2.sendMessage(TextComponent.fromLegacyText(String.valueOf(Proxy.FRIEND_PREFIX) + Config.getSetting("FriendAccepted").replace("<PlayerName>", p.getName())));
-/*     */             } 
-/*     */           } else {
-/*  92 */             p.sendMessage(TextComponent.fromLegacyText(String.valueOf(Proxy.FRIEND_PREFIX) + Config.getSetting("NoFriendRequestSent")));
-/*     */           } 
-/*  94 */         } else if (args[0].equalsIgnoreCase("decline") || args[0].equalsIgnoreCase("deny")) {
+/*  84 */
+                try {
+                    if (MySQL.hasSendRequest(p.getName(), args[1])) {
+                        MySQL.addFriend(p.getName(), args[1]);
+                        p.sendMessage(TextComponent.fromLegacyText(String.valueOf(Proxy.FRIEND_PREFIX) + Config.getSetting("FriendAccepted").replace("<PlayerName>", args[1])));
+                        if (FriendUtils.isOnline(FriendUtils.getUUIDFromName(args[1]))) {
+                            ProxiedPlayer p2 = ProxyServer.getInstance().getPlayer(args[1]);
+                            p2.sendMessage(TextComponent.fromLegacyText(String.valueOf(Proxy.FRIEND_PREFIX) + Config.getSetting("FriendAccepted").replace("<PlayerName>", p.getName())));
+                        }
+                    } else {
+                        p.sendMessage(TextComponent.fromLegacyText(String.valueOf(Proxy.FRIEND_PREFIX) + Config.getSetting("NoFriendRequestSent")));
+                    }
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+                /*  94 */         } else if (args[0].equalsIgnoreCase("decline") || args[0].equalsIgnoreCase("deny")) {
 /*  95 */           if (FriendUtils.hasRequest(FriendUtils.getUUIDFromName(p.getName()), FriendUtils.getUUIDFromName(args[1]))) {
 /*  96 */             FriendUtils.declineFriend(FriendUtils.getUUIDFromName(p.getName()), FriendUtils.getUUIDFromName(args[1]));
 /*  97 */             p.sendMessage(TextComponent.fromLegacyText(String.valueOf(Proxy.FRIEND_PREFIX) + Config.getSetting("FriendRequestDeclined")));
